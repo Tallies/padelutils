@@ -1,0 +1,21 @@
+# Binaries
+bin/
+dist/
+
+# Go build files
+*.exe
+*.test
+*.out
+
+# Dependency directories
+vendor/
+
+# IDE/editor
+.idea/
+.vscode/
+
+# Neovim swap files
+*.swp
+
+# OS files
+.DS_Store
