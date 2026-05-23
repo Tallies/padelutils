@@ -85,8 +85,17 @@ func CreateStandardPadelMatchTree() *node.Node {
 	// Helpers
 	parentScoresFn := func(scoreA string, scoreB string) (string, string, bool, error) {
 		scoreAInt, errA := strconv.Atoi(scoreA)
-		if errA != nil {
+		scoreBInt, errB := strconv.Atoi(scoreB)
+		if errA != nil || errB != nil {
 			return "", "", false, errors.New("error converting score string to int")
+		}
+
+		if scoreAInt == 0 {
+			return "", "", false, nil
+		}
+
+		if scoreBInt >= 2 {
+			return "", "", false, nil
 		}
 
 		return strconv.Itoa(scoreAInt - 1), scoreB, true, nil
@@ -111,15 +120,59 @@ func CreateStandardPadelMatchTree() *node.Node {
 	}
 
 	// Implementation
-	nodeCache := node.CreateNodes(2, func(scoreA int, scoreB int) bool { return false })
+	nodeCache := node.CreateNodes(2, func(_ int, _ int) bool { return false })
 	root := node.LinkNodes(nodeCache, leftChildOfFn, rightChildOfFn)
 	return root
 }
+
+func CreateOneSetPadelMatchTree() *node.Node {
+	// Helpers
+	leftChildFn := func(scoreA string, scoreB string) (string, string, bool) {
+		if scoreA == "1" && scoreB == "0" {
+			return "0", "0", true
+		}
+
+		return "", "", false
+	}
+
+	rightChildFn := func(scoreA string, scoreB string) (string, string, bool) {
+		if scoreB == "1" && scoreA == "0" {
+			return "0", "0", true
+		}
+
+		return "", "", false
+	}
+
+	// Implementation
+	nodeCache := node.CreateNodes(1,
+		func(scoreA int, scoreB int) bool {
+			if scoreA == 1 && scoreB == 1 {
+				return true
+			} else {
+				return false
+			}
+		})
+	root := node.LinkNodes(nodeCache, leftChildFn, rightChildFn)
+	return root
+}
+
+//---------------------------------------------------------------------------------------------------------
+// Creation Methods
+// --------------------------------------------------------------------------------------------------------
 
 func CreateStandardPadelMatch() PadelMatch {
 	root := CreateStandardPadelMatchTree()
 	return PadelMatch{
 		Type:  Standard,
+		root:  root,
+		score: root,
+	}
+}
+
+func CreateOneSetPadelMatch() PadelMatch {
+	root := CreateOneSetPadelMatchTree()
+	return PadelMatch{
+		Type:  OneSet,
 		root:  root,
 		score: root,
 	}

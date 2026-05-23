@@ -1,6 +1,7 @@
 package padelgame
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -318,8 +319,8 @@ func TestGetScore_MatchesIsComplete(t *testing.T) {
 // Single rollback from first point
 func TestReverseScoreForA_SingleStep(t *testing.T) {
 	g := newGame()
-	g.ScoreForA()                        // 0/0 → 15/0
-	a, b, done := g.ReverseScoreForA()   // back to 0/0
+	g.ScoreForA()                      // 0/0 → 15/0
+	a, b, done := g.ReverseScoreForA() // back to 0/0
 	if a != "0" || b != "0" || done {
 		t.Errorf("after ReverseScoreForA: got (%s/%s done=%v), want (0/0 false)", a, b, done)
 	}
@@ -355,7 +356,7 @@ func TestReversePoint_MidGame(t *testing.T) {
 // Full rollback all the way to the start
 func TestReversePoint_FullUnwind(t *testing.T) {
 	g := newGame()
-	moves := []string{"A", "A", "B", "A"} // 0→15/0→30/0→30/15→40/15
+	moves := []string{"A", "A", "B", "A"} // 15/0 -> 30/0 -> 30/15 -> 40/15
 	for _, m := range moves {
 		if m == "A" {
 			g.ScoreForA()
@@ -363,6 +364,7 @@ func TestReversePoint_FullUnwind(t *testing.T) {
 			g.ScoreForB()
 		}
 	}
+	fmt.Printf("Before unwind: %v/%v\n", g.score.ScoreA, g.score.ScoreB)
 	// Unwind all 4 moves
 	for i := len(moves) - 1; i >= 0; i-- {
 		if moves[i] == "A" {
@@ -370,6 +372,7 @@ func TestReversePoint_FullUnwind(t *testing.T) {
 		} else {
 			g.ReverseScoreForB()
 		}
+		fmt.Printf("Reverse for %v: %v/%v\n", moves[i], g.score.ScoreA, g.score.ScoreB)
 	}
 	a, b, done := g.GetScore()
 	if a != "0" || b != "0" || done {
@@ -414,9 +417,12 @@ func TestReversePoint_FromWinNode(t *testing.T) {
 func TestReversePoint_ThroughDeuce1(t *testing.T) {
 	g := newGame()
 	// Advance to D1
-	g.ScoreForA(); g.ScoreForA(); g.ScoreForA() // 40/0
-	g.ScoreForB(); g.ScoreForB()                // 40/30
-	g.ScoreForB()                               // D1/D1
+	g.ScoreForA()
+	g.ScoreForA()
+	g.ScoreForA() // 40/0
+	g.ScoreForB()
+	g.ScoreForB() // 40/30
+	g.ScoreForB() // D1/D1
 
 	a, b, _ := g.GetScore()
 	if a != "D1" || b != "D1" {
@@ -434,13 +440,16 @@ func TestReversePoint_ThroughDeuce1(t *testing.T) {
 func TestReversePoint_ThroughStarPoint(t *testing.T) {
 	g := newGame()
 	// Reach SP/SP: 40/0 → 40/15 → 40/30 → D1 → A1/40 → D2 → A2/40 → SP/SP
-	g.ScoreForA(); g.ScoreForA(); g.ScoreForA() // 40/0
-	g.ScoreForB(); g.ScoreForB()                // 40/30
-	g.ScoreForB()                               // D1/D1
-	g.ScoreForA()                               // A1/40
-	g.ScoreForB()                               // D2/D2
-	g.ScoreForA()                               // A2/40
-	g.ScoreForB()                               // SP/SP
+	g.ScoreForA()
+	g.ScoreForA()
+	g.ScoreForA() // 40/0
+	g.ScoreForB()
+	g.ScoreForB() // 40/30
+	g.ScoreForB() // D1/D1
+	g.ScoreForA() // A1/40
+	g.ScoreForB() // D2/D2
+	g.ScoreForA() // A2/40
+	g.ScoreForB() // SP/SP
 
 	a, b, _ := g.GetScore()
 	if a != "SP" || b != "SP" {
@@ -476,10 +485,10 @@ func TestReversePoint_Interleaved(t *testing.T) {
 
 func TestAllStraightWinPaths(t *testing.T) {
 	type winPath struct {
-		name      string
-		points    string // "A"/"B" sequence
-		finalA    string
-		finalB    string
+		name   string
+		points string // "A"/"B" sequence
+		finalA string
+		finalB string
 	}
 	tests := []winPath{
 		{"A wins 4-0", "AAAA", "40*", "0"},
