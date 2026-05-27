@@ -31,6 +31,14 @@ type PadelGame struct {
 	padelbase.PadelBase
 }
 
+func scoreAsInt(score string) int {
+	scoreInt, err := strconv.Atoi(score)
+	if err != nil {
+		panic(fmt.Sprintf("Score '%v' is invalid for RallyScoring", score))
+	}
+	return scoreInt
+}
+
 func (game *PadelGame) ScoreForA() (string, string, bool) {
 	if game.score.Left != nil {
 		game.score = game.score.Left
@@ -96,23 +104,31 @@ func reduceScoreStandard(toReduce string, toRemain string) (string, string, bool
 }
 
 func reduceScoreAdvantageToDeuce(toReduce string, toRemain string) (string, string, bool) {
+	switch {
+	case toReduce == "40" && toRemain == "A1*":
+		return "40", "A1", true
+	case toReduce == "40" && toRemain == "A1":
+		return "D1", "D1", true
+	} 
+
+	newToReduce, newToRemain, ok := reduceScoreStandard(toReduce, toRemain)
+	if ok {
+		return newToReduce, newToRemain, ok
+	}
+
 	switch toReduce {
 	case "D1":
 		return "30", "40", true
 	case "A1":
 		return "D1", "D1", true
 	case "A1*":
-		return "A1", toRemain, true
+		return "A1", "40", true
 	}
 	return "", "", false
 }
 
 func reduceScoreAdvantage(toReduce string, toRemain string) (string, string) {
-	newToReduce, newToRemain, ok := reduceScoreStandard(toReduce, toRemain)
-	if ok {
-		return newToReduce, newToRemain
-	}
-	newToReduce, newToRemain, ok = reduceScoreAdvantageToDeuce(toReduce, toRemain)
+	newToReduce, newToRemain, ok := reduceScoreAdvantageToDeuce(toReduce, toRemain)
 	if ok {
 		return newToReduce, newToRemain
 	}
@@ -120,11 +136,16 @@ func reduceScoreAdvantage(toReduce string, toRemain string) (string, string) {
 }
 
 func reduceScoreStarPoint(toReduce string, toRemain string) (string, string) {
-	newToReduce, newToRemain, ok := reduceScoreStandard(toReduce, toRemain)
-	if ok {
-		return newToReduce, newToRemain
+	switch {
+	case toReduce == "40" && toRemain == "SP*":
+		return "SP", "SP"
+	case toReduce == "40" && toRemain == "A2*":
+		return "40", "A2"
+	case toReduce == "40" && toRemain == "A2":
+		return "D2", "D2"
 	}
-	newToReduce, newToRemain, ok = reduceScoreAdvantageToDeuce(toReduce, toRemain)
+
+	newToReduce, newToRemain, ok := reduceScoreAdvantageToDeuce(toReduce, toRemain)
 	if ok {
 		return newToReduce, newToRemain
 	}
@@ -134,7 +155,7 @@ func reduceScoreStarPoint(toReduce string, toRemain string) (string, string) {
 	case "A2":
 		return "D2", "D2"
 	case "A2*":
-		return "A2", toRemain
+		return "A2", "40"
 	case "SP":
 		return "40", "A2"
 	case "SP*":
@@ -144,35 +165,53 @@ func reduceScoreStarPoint(toReduce string, toRemain string) (string, string) {
 }
 
 func reduceScoreOneDeuce(toReduce string, toRemain string) (string, string) {
-	newToReduce, newToRemain, ok := reduceScoreStandard(toReduce, toRemain)
+	//Special case for when reducing the lower score from a win
+	switch {
+	case toReduce == "40" && toRemain == "GP*":
+		return "GP", "GP"
+	} 
+
+	newToReduce, newToRemain, ok := reduceScoreAdvantageToDeuce(toReduce, toRemain)
 	if ok {
 		return newToReduce, newToRemain
 	}
+	
 	switch toReduce {
 	case "GP":
 		return "40", "A1"
 	case "GP*":
 		return "GP", "GP"
 	}
+	
 	panic(fmt.Sprintf("Invalid scores recieved to reduce for an OneDeuce game: '%v', '%v'", toReduce, toRemain))
 }
 
 func reduceScoreGoldenPoint(toReduce string, toRemain string) (string, string) {
+	if toReduce == "40" && toRemain =="GP*"{
+		return "GP", "GP"
+	}
+
 	newToReduce, newToRemain, ok := reduceScoreStandard(toReduce, toRemain)
 	if ok {
 		return newToReduce, newToRemain
 	}
+
 	switch toReduce {
 	case "GP":
 		return "30", "40"
 	case "GP*":
 		return "GP", "GP"
 	}
+
 	panic(fmt.Sprintf("Invalid scores recieved to reduce for an GoldenPoint game: '%v', '%v'", toReduce, toRemain))
 }
 
 func reduceScoreRallyScoring(toReduce string, toRemain string) (string, string) {
-	panic("Not implemented")
+	if(toReduce == "0") {
+		return toReduce, toRemain
+	}
+	toReduceInt := scoreAsInt(toReduce)
+	return strconv.Itoa(toReduceInt -1), toRemain
 }
 
 func (game *PadelGame) ReverseScoreForA() (string, string, bool) {
@@ -204,6 +243,10 @@ func (game PadelGame) GetScore() (string, string, bool) {
 }
 
 func (game PadelGame) IsComplete() bool {
+	if game.Type == RallyScoring {
+		rallyScore := strconv.Itoa(game.metadata[rallyScoreKey].(int))
+		return game.score.ScoreA == rallyScore || game.score.ScoreB == rallyScore
+	}
 	return game.score.Left == nil && game.score.Right == nil
 }
 
@@ -369,8 +412,8 @@ func linkAdvantageScoreTree(nodeCache map[string]*node.Node) *node.Node {
 	root := linkDeuceToAdvantageScoreTree(nodeCache)
 
 	// Loop advantage back to duece
-	nodeCache[aA1b40].Right = nodeCache[a40b40]
-	nodeCache[a40bA1].Left = nodeCache[a40b40]
+	nodeCache[aA1b40].Right = nodeCache[aD1bD1]
+	nodeCache[a40bA1].Left = nodeCache[aD1bD1]
 
 	return root
 }
@@ -386,7 +429,7 @@ func linkStarPointScoreTree(nodeCache map[string]*node.Node) *node.Node {
 
 	nodeCache[aA2b40].Left = nodeCache[aA2wb40]
 	nodeCache[aA2b40].Right = nodeCache[aSPbSP]
-
+  
 	nodeCache[a40bA2].Left = nodeCache[aSPbSP]
 	nodeCache[a40bA2].Right = nodeCache[a40bA2w]
 
@@ -417,27 +460,24 @@ func linkGoldenPointScoreTree(nodeCache map[string]*node.Node) *node.Node {
 	return root
 }
 
-func linkRallyScoringScoreTree(nodeCache map[string]*node.Node) *node.Node {
+func linkRallyScoringScoreTree(nodeCache map[string]*node.Node, rallyScore int) *node.Node {
 	// Helpers
-	scoreAsInt := func(score string) int {
-		scoreInt, err := strconv.Atoi(score)
-		if err != nil {
-			panic(fmt.Sprintf("Score '%v' is invalid for RallyScoring", score))
-		}
-		return scoreInt
-	}
 	leftChildOfFn := func(scoreA string, scoreB string) (string, string, bool) {
 		scoreAInt := scoreAsInt(scoreA)
-		if scoreAInt > 0 {
+		scoreBInt := scoreAsInt(scoreB)
+
+		if scoreAInt > 0 && scoreBInt < rallyScore {
 			return strconv.Itoa(scoreAInt - 1), scoreB, true
 		}
+
 		return "", "", false
 	}
 
 	rightChildOfFn := func(scoreA string, scoreB string) (string, string, bool) {
+		scoreAInt := scoreAsInt(scoreA)
 		scoreBInt := scoreAsInt(scoreB)
-		if scoreBInt > 0 {
-			return scoreA, strconv.Itoa(scoreBInt), true
+		if scoreBInt > 0 && scoreAInt < rallyScore {
+			return scoreA, strconv.Itoa(scoreBInt - 1), true
 		}
 		return "", "", false
 	}
@@ -474,7 +514,7 @@ func CreatePadelGameOneDeuce() PadelGame {
 	nodeCache := createOneDeuceScoreTree()
 	root := linkOneDeuceScoreTree(nodeCache)
 	return PadelGame{
-		Type:     StarPoint,
+		Type:     OneDeuce,
 		score:    root,
 		root:     root,
 		metadata: make(map[string]any),
@@ -485,7 +525,7 @@ func CreatePadelGameGoldenPoint() PadelGame {
 	nodeCache := createGoldenPointScoreTree()
 	root := linkGoldenPointScoreTree(nodeCache)
 	return PadelGame{
-		Type:     StarPoint,
+		Type:     GoldenPoint,
 		score:    root,
 		root:     root,
 		metadata: make(map[string]any),
@@ -494,7 +534,7 @@ func CreatePadelGameGoldenPoint() PadelGame {
 
 func CreatePadelGameRallyScoring(rallyScore int) PadelGame {
 	nodeCache := createRallyScoringScoreTree(rallyScore)
-	root := linkRallyScoringScoreTree(nodeCache)
+	root := linkRallyScoringScoreTree(nodeCache, rallyScore)
 	return PadelGame{
 		Type:     RallyScoring,
 		score:    root,
