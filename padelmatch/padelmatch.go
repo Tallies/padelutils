@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-
 	"padelutils/internal/node"
 	"padelutils/internal/padelbase"
 )
@@ -14,18 +13,19 @@ import (
 type PadelMatchType int
 
 const (
+	// Stadard represents a standard match of first to two sets.
 	Standard PadelMatchType = iota
+	// OneSet represents a match of a just on set.
 	OneSet
 )
 
 // PadelMatch representss a single match set score.
 type PadelMatch struct {
-	// Fields
 	root  *node.Node
 	score *node.Node
+	// Type of the paddel match of Standard or OneSet.
 	Type  PadelMatchType
 
-	// Methods
 	padelbase.PadelBase
 }
 
@@ -156,24 +156,23 @@ func CreateOneSetPadelMatchTree() *node.Node {
 	return root
 }
 
-//---------------------------------------------------------------------------------------------------------
-// Creation Methods
-// --------------------------------------------------------------------------------------------------------
-
-func CreateStandardPadelMatch() PadelMatch {
+// CreateStandardPadelMatch create a PadelMatch that consists of of 
+// at least two sets, and at most 3 sets.
+func CreateStandardPadelMatch() (*PadelMatch, error) {
 	root := CreateStandardPadelMatchTree()
-	return PadelMatch{
+	return &PadelMatch{
 		Type:  Standard,
 		root:  root,
 		score: root,
-	}
+	}, nil
 }
 
-func CreateOneSetPadelMatch() PadelMatch {
+// CreateOneSetPadelMatch create a PadelMatch that consists of only one set.
+func CreateOneSetPadelMatch() (*PadelMatch, error) {
 	root := CreateOneSetPadelMatchTree()
-	return PadelMatch{
+	return &PadelMatch{
 		Type:  OneSet,
 		root:  root,
 		score: root,
-	}
+	}, nil
 }

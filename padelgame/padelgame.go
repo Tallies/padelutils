@@ -1,30 +1,48 @@
+// Package padelgame provide implementations for padel game formats and managing game state.
 package padelgame
 
 import (
 	"fmt"
+	"errors"
 	"strconv"
-
 	"padelutils/internal/node"
 	"padelutils/internal/padelbase"
 )
 
 const rallyScoreKey = "rallyScore"
 
-// Game Types Enum
+// PadelGameType represents the types of games this implementation can handle state for. 
 type PadelGameType int
 
 const (
+	// Advantage represents a padel game where duece is replayed 
+	// until a side wins their advantage.
 	Advantage PadelGameType = iota
+	// StarPoint represents a padel game where there are two 
+	// duece points only, where after the next point wins the 
+	// game if the second advantage point is not won.
 	StarPoint
+	// OneDeuce represents a padel game where there is one deuce 
+	// point only, where after the next point wins the game if 
+	// the advantage point is not won.
 	OneDeuce
+	// GoldenPoint represents a padel game where there is no deuce 
+	// and the next point won at 40-40 wins the game.
 	GoldenPoint
+	// RallyScoring represents a padel game where scoring is done
+	// with sequential numbers starting at 0, 1, 2, etc for each time 
+	// a team wins a point, up to a maximum number, where the sum 
+	// of the the team scores are equal to the maximum. The maximum 
+	// is configurable.  
 	RallyScoring
 )
 
+// PadelGame handles the state of a game for the the specified PadelGameType.
 type PadelGame struct {
 	root     *node.Node
 	score    *node.Node
 	metadata map[string]any
+	// The type of padel game this struct manages state for.
 	Type     PadelGameType
 
 	// Methods
@@ -487,58 +505,75 @@ func linkRallyScoringScoreTree(nodeCache map[string]*node.Node, rallyScore int) 
 	return root
 }
 
-// PadelGame type creation functions
-func CreatePadelGameAdvantage() PadelGame {
+// CreatePadelGameAdvantage creates a PadelGame that handles
+// the state for a game where deuce gets replayed until the side
+// that has the advantage point wins the point.
+func CreatePadelGameAdvantage() (*PadelGame, error) {
 	nodeCache := createAdvantageScoreTree()
 	root := linkAdvantageScoreTree(nodeCache)
-	return PadelGame{
+	return &PadelGame{
 		Type:     StarPoint,
 		score:    root,
 		root:     root,
 		metadata: make(map[string]any),
-	}
+	}, nil
 }
 
-func CreatePadelGameStarPoint() PadelGame {
+// CreatePadelGameStarPoint create a padel that handles
+// the state for a game where after the second deuce, if the 
+// advantage point is not won, the next point is a golden point
+// where the next side to win a point wins the game.
+func CreatePadelGameStarPoint() (*PadelGame, error) {
 	nodeCache := createStarPointScoreTree()
 	root := linkStarPointScoreTree(nodeCache)
-	return PadelGame{
+	return &PadelGame{
 		Type:     StarPoint,
 		score:    root,
 		root:     root,
 		metadata: make(map[string]any),
-	}
+	}, nil
 }
 
-func CreatePadelGameOneDeuce() PadelGame {
+// CreatePadelGameOneDeuce creates a PadelGame that handles
+// the state for a game where after the first deuce, if the 
+// advantage point is not won, the next point is a golden point
+// where the next side to win a point wins the game.
+func CreatePadelGameOneDeuce() (*PadelGame, error) {
 	nodeCache := createOneDeuceScoreTree()
 	root := linkOneDeuceScoreTree(nodeCache)
-	return PadelGame{
+	return &PadelGame{
 		Type:     OneDeuce,
 		score:    root,
 		root:     root,
 		metadata: make(map[string]any),
-	}
+	}, nil
 }
-
-func CreatePadelGameGoldenPoint() PadelGame {
+// CreatePadelGameGoldenPoint creates a PadelGame that handles
+// the state for a game where 40/40 results in an immediate 
+// golden point situation where the next side to win a point 
+// wins the game.
+func CreatePadelGameGoldenPoint() (*PadelGame, error) {
 	nodeCache := createGoldenPointScoreTree()
 	root := linkGoldenPointScoreTree(nodeCache)
-	return PadelGame{
+	return &PadelGame{
 		Type:     GoldenPoint,
 		score:    root,
 		root:     root,
 		metadata: make(map[string]any),
-	}
+	}, nil
 }
 
-func CreatePadelGameRallyScoring(rallyScore int) PadelGame {
+// CreatePadelGameRallyScoring creates a PadelGame that handles
+// the state for a rally scored game. 0/0, 1/0, 2/0, 2/1, 3/1, etc. 
+// Specify the maximum number of points allowed for the game. For example:
+// 15 will result in scores like 8/7, 9/5, 2/13, etc.
+func CreatePadelGameRallyScoring(rallyScore int) (*PadelGame, error) {
 	nodeCache := createRallyScoringScoreTree(rallyScore)
 	root := linkRallyScoringScoreTree(nodeCache, rallyScore)
-	return PadelGame{
+	return &PadelGame{
 		Type:     RallyScoring,
 		score:    root,
 		root:     root,
 		metadata: map[string]any{rallyScoreKey: rallyScore},
-	}
+	}, nil
 }

@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	padelSet := padelset.CreatePadelSetStandard()
+	padelSet, _ := padelset.CreatePadelSetStandard()
 	teamA, teamB, setCompleted := padelSet.ScoreForA()
 	teamA, teamB, setCompleted = padelSet.ScoreForA()
 	teamA, teamB, setCompleted = padelSet.ScoreForB()

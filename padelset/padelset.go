@@ -3,6 +3,7 @@ package padelset
 
 import (
 	"fmt"
+	"errors"
 	"padelutils/internal/node"
 	"padelutils/internal/padelbase"
 	"strconv"
@@ -12,6 +13,8 @@ const (
 	firstToKey = "FirstTo"
 	bestOfKey  = "BestOf"
 )
+
+var ErrBestOfMustBeOdd = errors.New("best of must be an odd number")
 
 type PadelSetType int
 
@@ -255,35 +258,39 @@ func createPadelSetBestOfScoresTree(bestOf int) *node.Node {
 	return linkNodesBestOfScoresTree(nodeCache, bestOf)
 }
 
-// Public creation Methods
-
-// CreatePadelSetStandard is the entry creation method for standard padel set of first to 6 games (win by 2), tie breaker at 6/6
-func CreatePadelSetStandard() PadelSet {
+// CreatePadelSetStandard creates a standard set that is a race to six, win by two, tiebreaker 
+// on six all.
+func CreatePadelSetStandard() (*PadelSet, error) {
 	root := createPadelSetStandardScoresTree()
-	return PadelSet{
+	return &PadelSet{
 		Type:  Standard,
 		score: root,
 		root:  root,
-	}
+	}, nil
 }
 
-// CreatePadelSetFirstTo is the entry creation method for a padel set that is a simple race to X number of games. Eg, first to 5 can be 5/0, 5/1, 5/2, 5/3, 5/4 for either team.
-func CreatePadelSetFirstTo(firstTo int) PadelSet {
+// CreatePadelSetFirstTo creates set that is a simple race to a specified number of games.
+func CreatePadelSetFirstTo(firstTo int) (*PadelSet, error) {
 	root := createPadelSetFirstToScoresTree(firstTo)
-	return PadelSet{
+	return &PadelSet{
 		Type:     FirstTo,
 		score:    root,
 		root:     root,
 		metadata: map[string]any{firstToKey: firstTo},
-	}
+	}, nil
 }
 
-func CreatePadelSetBestOf(bestOf int) PadelSet {
+// CreatePadelSetBestOf creates a set where the games must total to a specified number.
+// The specified number must be uneven.
+func CreatePadelSetBestOf(bestOf int) (*PadelSet, error) {
+	if bestOf % 2 == 0 {
+		return nil, ErrBestOfMustBeOdd
+	}
 	root := createPadelSetBestOfScoresTree(bestOf)
-	return PadelSet{
+	return &PadelSet{
 		Type:     BestOf,
 		score:    root,
 		root:     root,
 		metadata: map[string]any{bestOfKey: bestOf},
-	}
+	}, nil
 }
