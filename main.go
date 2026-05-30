@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"padelutils/padelset"
+	"padelutils/internal/domain/padelset"
 )
 
 func main() {

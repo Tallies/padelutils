@@ -2,7 +2,7 @@ package node
 
 import (
 	"fmt"
-	"padelutils/internal/stack"
+	"padelutils/internal/util/stack"
 	"strconv"
 )
 

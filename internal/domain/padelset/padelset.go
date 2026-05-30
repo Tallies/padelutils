@@ -4,8 +4,8 @@ package padelset
 import (
 	"fmt"
 	"errors"
-	"padelutils/internal/node"
-	"padelutils/internal/padelbase"
+	"padelutils/internal/util/node"
+	"padelutils/internal/domain/padelbase"
 	"strconv"
 )
 

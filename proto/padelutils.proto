@@ -1,0 +1,107 @@
+syntax = "proto3";  
+
+package padelutils.v1
+
+import "google/protobuf/timestamp.proto";
+
+service PadelMatchService {
+  rpc StartMatch(StartMatchRequest) returns (MatchInfoResponse);
+  rpc GetMatches(MatchesRequest) returns (MatchesResponse);
+  rpc GetMatch(MatchRequest) returns (MatchInfoResponse);
+  rpc ScorePointForA(MatchRequest) returns (MatchInfoResponse);
+  rpc ScorePointForB(MatchRequest) returns (MatchInfoResponse);
+  rpc ScoreGameForA(MatchRequest) returns (MatchInfoResponse);
+  rpc ScoreGameForB(MatchRequest) returns (MatchInfoResponse);
+  rpc ScoreSetForA(MatchRequest) returns (MatchInfoResponse);
+  rpc ScoreSetForB(MatchRequest) returns (MatchInfoResponse);
+  rpc ReverseLastScore(MatchRequest) returns (MatchInfoResponse);
+}
+
+message StartMatchRequest {
+  google.protobuf.Timestamp started_at = 1;
+  optional string team_a_name = 2;
+  optional string team_b_name = 3;
+  optional string tournament_id = 4;
+  PadelMatchSetup match_setup = 5;
+  PadelSetSetup set_setup = 6;
+  PadelGameSetup game_setup = 7;
+}
+
+message MatchInfoResponse {
+  google.protobuf.Timestamp started_at = 1;
+  google.protobuf.Timestamp updated_at = 2;
+  string match_id = 3; //UUID
+  string team_a_name = 3;
+  string team_b_name = 4;
+  string tournament_id = 5;
+  PadelMatch match = 6;
+  PadelSet set = 7;
+  PadelGame game = 8;
+}
+
+message MatchesRequest {
+  string match_id = 1;
+}
+
+message MatchesResponse {
+  repeated MatchInfoResponse Matches = 1;
+}
+
+message MatchRequest {
+  string match_id = 1;   // identify which match instance to act on
+}
+
+message PadelMatchSetup {
+  PadelMatchType padel_match_type = 1;
+}
+
+messge PadelSetSetup {
+  PadelSetType padel_set_type = 1;
+  optional setup_number = 2;
+}
+
+message PadelGameSetup {
+  PadelGameType padel_game_type = 1;
+  optional setup_number = 2;
+}
+
+message PadelMatch {
+  PadelMatchType type = 1;
+  string team_a_score = 2;
+  string team_b_score = 3;
+  bool is_complete = 4
+}
+
+message PadeSet {
+  PadelSetType type = 1;
+  string team_a_score = 2;
+  string team_b_score = 3;
+  bool is_complete = 4;
+}
+
+message PadelGame {
+  PadelGameType type = 1;
+  string team_a_score = 2;
+  string team_b_score = 3;
+  bool is_complete = 4;
+}
+
+
+enum PadelMatchType {
+  STANDARD = 0;
+  ONESET = 1
+}
+
+enum PadelSetType {
+  STANDARD = 0;
+  FIRSTTO = 1;
+  BESTOF = 2;
+}
+
+enum PadelGameSet {
+  ADVANTAGE = 0;
+  STARPOINT = 1;
+  ONEDEUCE = 2;
+  GOLDENPOINT = 3;
+  RALLYSCORING = 4;
+}

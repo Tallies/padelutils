@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"padelutils/internal/node"
-	"padelutils/internal/padelbase"
+	"padelutils/internal/util/node"
+	"padelutils/internal/domain/padelbase"
 )
 
 // PadelMatchType is the kind match that the scoring will represent
