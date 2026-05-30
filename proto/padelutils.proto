@@ -1,6 +1,8 @@
 syntax = "proto3";  
 
-package padelutils.v1
+package padelutils.v1;
+
+option go_package = "padelutils/gen/padel/v1"; 
 
 import "google/protobuf/timestamp.proto";
 
@@ -31,12 +33,12 @@ message MatchInfoResponse {
   google.protobuf.Timestamp started_at = 1;
   google.protobuf.Timestamp updated_at = 2;
   string match_id = 3; //UUID
-  string team_a_name = 3;
-  string team_b_name = 4;
-  string tournament_id = 5;
-  PadelMatch match = 6;
-  PadelSet set = 7;
-  PadelGame game = 8;
+  string team_a_name = 4;
+  string team_b_name = 5;
+  string tournament_id = 6;
+  PadelMatch match = 7;
+  PadelSet set = 8;
+  PadelGame game = 9;
 }
 
 message MatchesRequest {
@@ -55,24 +57,24 @@ message PadelMatchSetup {
   PadelMatchType padel_match_type = 1;
 }
 
-messge PadelSetSetup {
+message PadelSetSetup {
   PadelSetType padel_set_type = 1;
-  optional setup_number = 2;
+  optional int32 setup_number = 2;
 }
 
 message PadelGameSetup {
   PadelGameType padel_game_type = 1;
-  optional setup_number = 2;
+  optional int32 setup_number = 2;
 }
 
 message PadelMatch {
   PadelMatchType type = 1;
   string team_a_score = 2;
   string team_b_score = 3;
-  bool is_complete = 4
+  bool is_complete = 4;
 }
 
-message PadeSet {
+message PadelSet {
   PadelSetType type = 1;
   string team_a_score = 2;
   string team_b_score = 3;
@@ -88,20 +90,20 @@ message PadelGame {
 
 
 enum PadelMatchType {
-  STANDARD = 0;
-  ONESET = 1
+  STANDARD_MATCH = 0;
+  ONESET_MATCH = 1;
 }
 
 enum PadelSetType {
-  STANDARD = 0;
-  FIRSTTO = 1;
-  BESTOF = 2;
+  STANDARD_SET = 0;
+  FIRSTTO_SET = 1;
+  BESTOF_SET = 2;
 }
 
-enum PadelGameSet {
-  ADVANTAGE = 0;
-  STARPOINT = 1;
-  ONEDEUCE = 2;
-  GOLDENPOINT = 3;
-  RALLYSCORING = 4;
+enum PadelGameType {
+  ADVANTAGE_GAME = 0;
+  STARPOINT_GAME = 1;
+  ONEDEUCE_GAME = 2;
+  GOLDENPOINT_GAME = 3;
+  RALLYSCORING_GAME = 4;
 }
